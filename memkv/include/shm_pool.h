@@ -34,8 +34,10 @@ class ShmPool : public MemPool {
                 std::to_string(current_block_index_));
     }
 
-    bool LoadResourceForBlock(ShmBlock *block);
-    bool LoadFile(const std::string &file_name, const size_t &file_size);
+    bool LoadBlock(ShmBlock *block);
+    bool VMMap(ShmBlock *block);
+    bool CheckFileExistAndSize(const std::string &file_name, const size_t &file_size);
+    bool CreateFile(const std::string &file_name, const size_t &file_size);
 
    private:
     ShmBlock *head_;

@@ -5,6 +5,7 @@ scp -r dev-panyuchen-01.dev.kwaidc.com:/home/panyuchen/CloudKv /Users/panyuchen/
 
 # prepare
 ```shell
+gcc 8.3.0
 mkdir build
 mkdir third_party
 # glog

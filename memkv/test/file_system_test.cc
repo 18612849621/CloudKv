@@ -15,7 +15,7 @@ TEST(FileSystem, create_file) {
     }
 
     // 2. Check if directory exists
-    if (FileSystem::DirectoryExists(test_dir)) {
+    if (FileSystem::CheckPathExist(test_dir)) {
         LOG(INFO) << "[Detection] Directory exists: " << test_dir;
     }
 

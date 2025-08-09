@@ -1,12 +1,9 @@
 cmake_minimum_required(VERSION 3.17)
+
 project(
   MemKV
   VERSION 1.0
   LANGUAGES CXX)
-
-# include cmake
-include(cmake/environment.cmake)
-include(cmake/compile_options.cmake)
 
 # static lib
 aux_source_directory(src SRC_LIST)
@@ -21,4 +18,3 @@ target_link_libraries(main_test PRIVATE glog gflags gtest memkv_lib)
 
 add_executable(file_system_test test/file_system_test.cc)
 target_link_libraries(file_system_test PRIVATE glog gflags gtest memkv_lib)
-

@@ -2,7 +2,6 @@
 
 #include <glog/logging.h>
 
-#include <fstream>
 #include <new>
 
 #include "file_system.h"
@@ -18,8 +17,8 @@ void* ShmPool::Malloc(uint64_t size, int* fd) {
     block->file_name = CurBlockFileName();
     block->size = size;
     block->index = current_block_index_++;
-    if (!LoadResourceForBlock(block)) {
-        LOG(ERROR) << "Load resource for block " << current_block_index_ << " error.";
+    if (!LoadBlock(block)) {
+        LOG(ERROR) << "Load block " << current_block_index_ << " error.";
     }
     LOG(INFO) << "Create block " << current_block_index_ << " success.";
     return block->data;
@@ -29,22 +28,53 @@ void ShmPool::Free(void* ptr) {
     // TODO(panyuchen): find block and unmap
 }
 
-bool ShmPool::LoadResourceForBlock(ShmBlock* block) {
-    // LOG(INFO) << "Block file name is: " << block->file_name;
-    if (!FileSystem::DirectoryExists(block->file_name)) {
-        if (!FileSystem::CreateDirectory(FileSystem::DirName(block->file_name))) {
+bool ShmPool::LoadBlock(ShmBlock* block) {
+    LOG(INFO) << "Block file name is: " << block->file_name;
+    // no need to mmap
+    if (block->data != nullptr && block->fd >= 0) return true;
+    const std::string file_name = block->file_name;
+    const size_t block_size = block->size;
+
+    if (!CheckFileExistAndSize(file_name, block_size)) {
+        return false;
+    }
+    if (!FileSystem::CheckPathExist(file_name)) {
+        if (!FileSystem::CreateDirectory(FileSystem::DirName(file_name))) {
             LOG(FATAL) << "Create directory for Block \"" << block->file_name << "\" failed";
         }
-        LoadFile(block->file_name, block->size);
+        CreateFile(file_name, block_size);
     } else {
-        LOG(INFO) << "File " << block->file_name << " is existed.";
+        LOG(INFO) << "File " << file_name << " is existed.";
     }
 
-    // FileSystem::CreateDirectory(block->file_name);
+    if (!CheckFileExistAndSize(file_name, block_size)) {
+        return false;
+    }
+
+    return VMMap(block);
+}
+bool ShmPool::VMMap(ShmBlock* block) { return true; }
+bool ShmPool::CheckFileExistAndSize(const std::string& file_name, const size_t& file_size) {
+    // NOTE(panyuchen): if file path or size invalid, then to be delete.
+    if (FileSystem::CheckPathExist(file_name)) {
+        size_t get_file_size;
+        if (!FileSystem::GetFileSize(file_name, &get_file_size)) {
+            LOG(ERROR) << "File " << file_name << " is invalid.";
+            FileSystem::DeleteFile(file_name);
+            return false;
+        }
+
+        if (get_file_size != file_size) {
+            LOG(ERROR) << "File " << file_name << " size " << get_file_size
+                       << " bytes is not equal need size " << file_size << " bytes.";
+            FileSystem::DeleteFile(file_name);
+            return false;
+        }
+    }
     return true;
 }
 
-bool ShmPool::LoadFile(const std::string& file_name, const size_t& file_size) {
+bool ShmPool::CreateFile(const std::string& file_name, const size_t& file_size) {
     // NOTE(panyuchen): To increase the stability of writing files, load them by chunck
     std::ofstream output(file_name);
     if (!output) {
@@ -71,6 +101,5 @@ bool ShmPool::LoadFile(const std::string& file_name, const size_t& file_size) {
     }
     return true;
 }
-
 }  // namespace base
 }  // namespace cloudkv

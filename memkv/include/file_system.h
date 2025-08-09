@@ -1,8 +1,10 @@
-#include <dirent.h>    // opendir, readdir, closedir
+#include <dirent.h>  // opendir, readdir, closedir
+#include <glog/logging.h>
 #include <sys/stat.h>  // mkdir, stat, S_ISDIR
 #include <unistd.h>    // unlink, rmdir
 
 #include <cstring>  // strcmp
+#include <fstream>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -10,16 +12,16 @@ namespace cloudkv {
 namespace base {
 class FileSystem {
    public:
-    // Create a single-level directory (returns false if the directory already exists)
-    inline static bool CreateSingleLevelDirectory(const std::string& path) {
-        if (DirectoryExists(path)) {
+    // Create a directory on current level(returns false if the directory already exists)
+    inline static bool CreateDirectoryOnCurrentLevel(const std::string& path) {
+        if (CheckPathExist(path)) {
             return false;  // Directory already exists
         }
         // Set permissions: user read, write and execute, group and others read and execute (0755)
         return mkdir(path.c_str(), S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) == 0;
     }
 
-    // Recursively create mutil-level folder (like `mkdir -p`)
+    // Recursively create any-level folder (like `mkdir -p`)
     inline static bool CreateDirectory(const std::string& path) {
         if (path.empty()) return false;
 
@@ -28,7 +30,7 @@ class FileSystem {
             currentPath += path[pos];
             // Create directories when encountering a separator or the end of the path​
             if (path[pos] == '/' || pos == path.size() - 1) {
-                if (!DirectoryExists(currentPath) && !CreateSingleLevelDirectory(currentPath)) {
+                if (!CheckPathExist(currentPath) && !CreateDirectoryOnCurrentLevel(currentPath)) {
                     return false;  // Create foler failed
                 }
             }
@@ -36,18 +38,25 @@ class FileSystem {
         return true;
     }
 
-    // Check if directory exists
-    inline static bool DirectoryExists(const std::string& path) {
-        struct stat info;
-        if (stat(path.c_str(), &info) != 0) {
-            return false;  // Path can't be accessed
+    // Check if path exists
+    inline static bool CheckPathExist(const std::string& path) {
+        return access(path.c_str(), F_OK) == 0;
+    }
+
+    // Check if path and size correct.
+    inline static bool GetFileSize(const std::string& file_name, size_t* file_size) {
+        struct stat st;
+        if (stat(file_name.c_str(), &st) == 0) {
+            *file_size = st.st_size;
+        } else {
+            return false;
         }
-        return S_ISDIR(info.st_mode);  // Check is a directory
+        return true;
     }
 
     // Recursively delete directory and data (like `rm -rf`)
-    static bool RemoveDirectory(const std::string& path) {
-        if (!DirectoryExists(path)) return false;
+    inline static bool RemoveDirectory(const std::string& path) {
+        if (!CheckPathExist(path)) return false;
 
         DIR* dir = opendir(path.c_str());
         if (!dir) return false;
@@ -93,6 +102,14 @@ class FileSystem {
         }
 
         return path.substr(0, last_sep);  // Return parent path
+    }
+
+    inline static bool DeleteFile(const std::string& file_name) {
+        if (std::remove(file_name.c_str()) == 0) {
+        } else {
+            return false;
+        }
+        return true;
     }
 };
 }  // namespace base
