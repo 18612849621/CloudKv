@@ -1,6 +1,8 @@
 #include "shm_pool.h"
 
+#include <fcntl.h>
 #include <glog/logging.h>
+#include <sys/mman.h>
 
 #include <new>
 
@@ -53,7 +55,26 @@ bool ShmPool::LoadBlock(ShmBlock* block) {
 
     return VMMap(block);
 }
-bool ShmPool::VMMap(ShmBlock* block) { return true; }
+bool ShmPool::VMMap(ShmBlock* block) {
+    auto fd = open(block->file_name.c_str(), O_RDWR);
+    if (fd <= 0) {
+        LOG(ERROR) << "Block " << block->file_name << " map file open failed, " << strerror(errno);
+        return false;
+    }
+    void* last_ptr = block->data;
+    block->data = mmap(nullptr, block->size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    if (block->data == MAP_FAILED) {
+        LOG(ERROR) << "Failed to map file:" << block->file_name << ", size: " << block->size
+                   << ", part_id:" << part_id_ << ", ptr:" << block->data
+                   << ", last_ptr:" << last_ptr << ", errno:" << errno
+                   << ", msg:" << strerror(errno);
+        return false;
+    }
+    block->fd = fd;
+    LOG(INFO) << "Create ShmFile: " << block->file_name << ", size: " << block->size
+              << ", part_id:" << part_id_ << ", ptr:" << block->data << ", last_ptr:" << last_ptr;
+    return true;
+}
 bool ShmPool::CheckFileExistAndSize(const std::string& file_name, const size_t& file_size) {
     // NOTE(panyuchen): if file path or size invalid, then to be delete.
     if (FileSystem::CheckPathExist(file_name)) {
