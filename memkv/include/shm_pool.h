@@ -29,15 +29,16 @@ class ShmPool : public MemPool {
     };
 
    private:
-    inline std::string CurBlockFileName() const {
+    inline std::string GetCurShmBlockFileName() const {
         return (dir_name_ + "/" + std::to_string(current_block_index_) + "/" +
                 std::to_string(current_block_index_));
     }
 
-    bool LoadBlock(ShmBlock *block);
-    bool VMMap(ShmBlock *block);
+    void StoreShmBlock(ShmBlock *block);
+    bool LoadShmBlock(ShmBlock *block);
+    bool MapFileToMemoryForShmBlock(ShmBlock *block);
     bool CheckFileExistAndSize(const std::string &file_name, const size_t &file_size);
-    bool CreateFile(const std::string &file_name, const size_t &file_size);
+    bool CreateFileForShmBlock(const std::string &file_name, const size_t &file_size);
 
    private:
     ShmBlock *head_;

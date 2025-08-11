@@ -79,7 +79,7 @@ class FileSystem {
         return rmdir(path.c_str()) == 0;  // delete empty directory
     }
 
-    inline static std::string DirName(const std::string& path) {
+    inline static std::string GetDirName(const std::string& path) {
         if (path.empty()) return ".";  // Handle empty path case
 
         size_t end_pos = path.size() - 1;

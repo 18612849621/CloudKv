@@ -24,7 +24,7 @@ TEST(FileSystem, create_file) {
         LOG(INFO) << "[CLEANUP] Directory deleted: ./test";
     }
     const char* test_path = "/dev/shm/demo/0/1";
-    LOG(INFO) << "Parent folder name is: " << FileSystem::DirName(test_path);
+    LOG(INFO) << "Parent folder name is: " << FileSystem::GetDirName(test_path);
 }
 
 }  // namespace base
