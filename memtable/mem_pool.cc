@@ -1,21 +1,21 @@
-#include "mem_pool.h"
+#include "memtable/mem_pool.h"
 
 #include <new>
 
 namespace cloudkv {
-namespace base {
+namespace memtable {
 
-void* MemPool::Malloc(uint64_t size, int* fd) {
+void* MemoryPool::Malloc(uint64_t size, int* fd) {
     auto ptr = new (std::nothrow) char[size]();
     return ptr;
 }
 
-void MemPool::Free(void* ptr) {
+void MemoryPool::Free(void* ptr) {
     if (ptr != nullptr) {
         delete[] reinterpret_cast<char*>(ptr);
         ptr = nullptr;
     }
 }
 
-}  // namespace base
+}  // namespace memtable
 }  // namespace cloudkv

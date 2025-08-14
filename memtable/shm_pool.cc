@@ -1,4 +1,4 @@
-#include "shm_pool.h"
+#include "memtable/shm_pool.h"
 
 #include <fcntl.h>
 #include <glog/logging.h>
@@ -6,10 +6,10 @@
 
 #include <new>
 
-#include "file_system.h"
+#include "utils/file_system.h"
 
 namespace cloudkv {
-namespace base {
+namespace memtable {
 
 void* ShmPool::Malloc(uint64_t size, int* fd) {
     ShmBlock* new_block = new (std::nothrow) ShmBlock();
@@ -71,8 +71,8 @@ bool ShmPool::LoadShmBlock(ShmBlock* block) {
     if (!CheckFileExistAndSize(file_name, block_size)) {
         return false;
     }
-    if (!FileSystem::CheckPathExist(file_name)) {
-        if (!FileSystem::CreateDirectory(FileSystem::GetDirName(file_name))) {
+    if (!utils::FileSystem::CheckPathExist(file_name)) {
+        if (!utils::FileSystem::CreateDirectory(utils::FileSystem::GetDirName(file_name))) {
             LOG(FATAL) << "Create directory for Shm block \"" << block->file_name << "\" failed";
         }
         CreateFileForShmBlock(file_name, block_size);
@@ -89,7 +89,8 @@ bool ShmPool::LoadShmBlock(ShmBlock* block) {
 bool ShmPool::MapFileToMemoryForShmBlock(ShmBlock* block) {
     auto fd = open(block->file_name.c_str(), O_RDWR);
     if (fd <= 0) {
-        LOG(ERROR) << "Shm block " << block->file_name << " map file open failed, " << strerror(errno);
+        LOG(ERROR) << "Shm block " << block->file_name << " map file open failed, "
+                   << strerror(errno);
         return false;
     }
     block->data = mmap(nullptr, block->size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
@@ -106,18 +107,18 @@ bool ShmPool::MapFileToMemoryForShmBlock(ShmBlock* block) {
 }
 bool ShmPool::CheckFileExistAndSize(const std::string& file_name, const size_t& file_size) {
     // NOTE(panyuchen): if file path or size invalid, then to be delete.
-    if (FileSystem::CheckPathExist(file_name)) {
+    if (utils::FileSystem::CheckPathExist(file_name)) {
         size_t get_file_size;
-        if (!FileSystem::GetFileSize(file_name, &get_file_size)) {
+        if (!utils::FileSystem::GetFileSize(file_name, &get_file_size)) {
             LOG(ERROR) << "Shm file " << file_name << " is invalid.";
-            FileSystem::DeleteFile(file_name);
+            utils::FileSystem::DeleteFile(file_name);
             return false;
         }
 
         if (get_file_size != file_size) {
             LOG(ERROR) << "Shm file " << file_name << " size " << get_file_size
                        << " bytes is not equal need size " << file_size << " bytes.";
-            FileSystem::DeleteFile(file_name);
+            utils::FileSystem::DeleteFile(file_name);
             return false;
         }
     }
@@ -151,5 +152,5 @@ bool ShmPool::CreateFileForShmBlock(const std::string& file_name, const size_t& 
     }
     return true;
 }
-}  // namespace base
+}  // namespace memtable
 }  // namespace cloudkv

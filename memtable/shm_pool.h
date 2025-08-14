@@ -4,11 +4,11 @@
 
 #include <string>
 
-#include "mem_pool.h"
+#include "memtable/mem_pool.h"
 namespace cloudkv {
-namespace base {
+namespace memtable {
 
-class ShmPool : public MemPool {
+class ShmPool : public MemoryPool {
    public:
     ShmPool() = default;
     explicit ShmPool(std::string dir_name, uint32_t part_id)
@@ -48,5 +48,5 @@ class ShmPool : public MemPool {
     uint32_t current_block_index_ = 0;
 };
 
-}  // namespace base
+}  // namespace memtable
 }  // namespace cloudkv

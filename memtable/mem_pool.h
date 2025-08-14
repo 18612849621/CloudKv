@@ -2,16 +2,16 @@
 
 #include <stdint.h>
 namespace cloudkv {
-namespace base {
+namespace memtable {
 
-class MemPool {
+class MemoryPool {
    public:
-    MemPool() = default;
-    virtual ~MemPool() = default;
+    MemoryPool() = default;
+    virtual ~MemoryPool() = default;
 
     virtual void *Malloc(uint64_t size, int *fd = nullptr);
     virtual void Free(void *ptr);
 };
 
-}  // namespace base
+}  // namespace memtable
 }  // namespace cloudkv

@@ -9,7 +9,7 @@
 #include <string>
 #include <vector>
 namespace cloudkv {
-namespace base {
+namespace utils {
 class FileSystem {
    public:
     // Create a directory on current level(returns false if the directory already exists)
@@ -112,5 +112,5 @@ class FileSystem {
         return true;
     }
 };
-}  // namespace base
+}  // namespace utils
 }  // namespace cloudkv

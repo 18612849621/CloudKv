@@ -16,9 +16,11 @@ project(
   VERSION 1.0
   LANGUAGES CXX)
 
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 # third_party
 add_subdirectory(third_party/gflags)
 add_subdirectory(third_party/glog)
 add_subdirectory(third_party/googletest)
-# framework
-add_subdirectory(memkv)
+# src
+add_subdirectory(memtable)
+add_subdirectory(utils)
